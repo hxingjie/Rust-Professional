@@ -70,13 +70,38 @@ impl<T> LinkedList<T> {
         }
     }
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
+    where T: PartialOrd + Clone
 	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+		let mut list_a = list_a;
+        let mut list_b = list_b;
+
+        let mut ans: LinkedList<T> = LinkedList::default();
+        let mut pa: u32 = 0;
+        let mut pb: u32 = 0;
+
+        while pa < list_a.length || pb < list_b.length {
+            let mut node_a: Option<&T> = list_a.get(pa as i32);
+            let mut node_b: Option<&T> = list_b.get(pb as i32);
+
+            if node_a.is_some() && node_b.is_some() {
+                if *node_a.unwrap() < *node_b.unwrap() {
+                    node_b = None;
+                } else {
+                    node_a = None;
+                }
+            }
+            
+            if node_a.is_some() {
+                ans.add(node_a.unwrap().clone());
+                pa += 1;
+            } else if node_b.is_some() {
+                ans.add(node_b.unwrap().clone());
+                pb += 1;
+            }
+
         }
+
+		ans
 	}
 }
 
