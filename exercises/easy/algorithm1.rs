@@ -69,39 +69,49 @@ impl<T> LinkedList<T> {
             },
         }
     }
+	pub fn insert(&mut self, node: Option<NonNull<Node<T>>>) {
+        if self.start.is_none() {
+            self.start = node;
+            self.end = node;
+        } else {
+            unsafe { (*(self.end.as_mut().unwrap().as_ptr())).next = node; }
+            self.end = node;
+        }
+    }
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-    where T: PartialOrd + Clone
+    where 
+        T: PartialOrd,
 	{
-		let mut list_a = list_a;
-        let mut list_b = list_b;
+		let mut ans: LinkedList<T> = LinkedList::new();
 
-        let mut ans: LinkedList<T> = LinkedList::default();
-        let mut pa: u32 = 0;
-        let mut pb: u32 = 0;
+        let mut node_a = list_a.start;
+        let mut node_b = list_b.start;
 
-        while pa < list_a.length || pb < list_b.length {
-            let mut node_a: Option<&T> = list_a.get(pa as i32);
-            let mut node_b: Option<&T> = list_b.get(pb as i32);
-
+        while node_a.is_some() || node_b.is_some() {
             if node_a.is_some() && node_b.is_some() {
-                if *node_a.unwrap() < *node_b.unwrap() {
-                    node_b = None;
-                } else {
-                    node_a = None;
+                unsafe { 
+                    if (*(node_a.as_ref().unwrap().as_ptr())).val < (*(node_b.as_ref().unwrap().as_ptr())).val {
+                        ans.insert(node_a);
+                        node_a = (*(node_a.as_ref().unwrap().as_ptr())).next;
+                    } else {
+                        ans.insert(node_b);
+                        node_b = (*(node_b.as_ref().unwrap().as_ptr())).next;
+                    }
+                }
+            } else if node_a.is_some() {
+                unsafe {
+                    ans.insert(node_a);
+                    node_a = (*(node_a.as_ref().unwrap().as_ptr())).next;
+                }
+            } else {
+                unsafe {
+                    ans.insert(node_b);
+                    node_b = (*(node_b.as_ref().unwrap().as_ptr())).next;
                 }
             }
-            
-            if node_a.is_some() {
-                ans.add(node_a.unwrap().clone());
-                pa += 1;
-            } else if node_b.is_some() {
-                ans.add(node_b.unwrap().clone());
-                pb += 1;
-            }
-
         }
-
-		ans
+        
+        ans
 	}
 }
 

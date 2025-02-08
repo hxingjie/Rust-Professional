@@ -50,13 +50,31 @@ where
 
     // Insert a value into the BST
     fn insert(&mut self, value: T) {
-        //TODO
+        if self.root.is_none() {
+            self.root = Some(Box::new(TreeNode::new(value)));
+            return;
+        }
+
+        self
+        .root
+        .as_mut()
+        .unwrap()
+        .insert(value);
     }
 
+    fn _search(node: Option<&Box<TreeNode<T>>>, value: &T) -> bool {
+        if node.is_none() {
+            false
+        } else if node.unwrap().value == *value {
+            true
+        } else {
+            Self::_search(node.unwrap().left.as_ref(), value) 
+                || Self::_search(node.unwrap().right.as_ref(), value)
+        }
+    }
     // Search for a value in the BST
     fn search(&self, value: T) -> bool {
-        //TODO
-        true
+        Self::_search(self.root.as_ref(), &value)
     }
 }
 
@@ -66,7 +84,23 @@ where
 {
     // Insert a node into the tree
     fn insert(&mut self, value: T) {
-        //TODO
+        if self.value > value {
+            if self.left.is_none() {
+                self.left = Some(Box::new(TreeNode::new(value)));
+            } else {
+                self.left.as_mut()
+                         .unwrap()
+                         .insert(value);
+            }
+        } else if self.value < value {
+            if self.right.is_none() {
+                self.right = Some(Box::new(TreeNode::new(value)));
+            } else {
+                self.right.as_mut()
+                          .unwrap()
+                          .insert(value);
+            }
+        }
     }
 }
 
@@ -121,6 +155,4 @@ mod tests {
             None => panic!("Root should not be None after insertion"),
         }
     }
-}    
-
-
+}
