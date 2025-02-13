@@ -39,15 +39,16 @@ fn date_to_week_count(year: u32, month: u32, day: u32) -> u32 {
         week_day = 0;
     }
     let (days, _) = count_days(year, month, day); // 计算该年已经过了多少天
+    
     let mut ans = 0;
-    if week_day > 4 {
+    if week_day > 4 { // 1月1日所在的周是去年的最后一周
         if day <= 7-week_day+1 { // 是否是去年的最后一周
             ans = date_to_week_count(year-1, 12, 31);
         } else {
             ans = (days + week_day - 3) / 7 + 1;
         }
     } else {
-        ans = (days + week_day - 1) / 7 + 1;
+        ans = (days + week_day - 2) / 7 + 1;
     }
 
     if month == 12 {
@@ -96,7 +97,7 @@ fn compute_diff_of_date(year0: u32, month0: u32, day0: u32, year1: u32, month1: 
     }
 }
 
-fn date_to_newyear(year: u32, month: u32, day: u32, date2newyear: HashMap<u32, (u32, u32)>) -> u32 {
+fn date_to_newyear(year: u32, month: u32, day: u32, date2newyear: &HashMap<u32, (u32, u32)>) -> u32 {
     let mut newyear_year = year;
     let mut newyear_month = 0;
     let mut newyear_day = 0;
@@ -125,14 +126,34 @@ fn next_day(year: u32, month: u32, day: u32) -> (u32, u32, u32) {
     }
 }
 
-fn is_holiday(year: u32, month: u32, day: u32) -> bool {
+fn is_holiday(year: u32, month: u32, day: u32, date2newyear: &HashMap<u32, (u32, u32)>) -> bool {
+    let mut month2days: [u32; 13] = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if is_leapyear(year) {
+        month2days[2] = 29;
+    }
     let mut holidays: HashSet<(u32, u32)> = HashSet::new();
+
+    // 元旦
     holidays.insert((1, 1));
+
+    // 春节
+    let (mut newyear_month, mut newyear_day) = *date2newyear.get(&year).expect("date_to_newyear error");
+    if newyear_day != 1 {
+        holidays.insert((newyear_month, newyear_day-1));
+    } else {
+        holidays.insert((newyear_month-1, month2days[newyear_month as usize - 1]));
+    }
+    for _ in 0..7 {
+        holidays.insert((newyear_month, newyear_day));
+        (_, newyear_month, newyear_day) = next_day(year, newyear_month, newyear_day);
+    }
+
+    // 劳动节
     holidays.insert((5, 1));
     holidays.insert((5, 2));
     holidays.insert((5, 3));
     holidays.insert((5, 4));
-    //holidays.insert((5, 5));
+    holidays.insert((5, 5));
     if holidays.contains(&(month, day)) {
         true
     } else {
@@ -144,9 +165,9 @@ fn is_holiday(year: u32, month: u32, day: u32) -> bool {
     }
 }
 
-fn date_to_trading_days(year: u32, month: u32, day: u32) -> u32 {
+fn date_to_trading_days(year: u32, month: u32, day: u32, date2newyear: &HashMap<u32, (u32, u32)>) -> u32 {
     let mut trading_day = next_day(year, month, day);
-    while is_holiday(trading_day.0, trading_day.1, trading_day.2) {
+    while is_holiday(trading_day.0, trading_day.1, trading_day.2, date2newyear) {
         trading_day = next_day(trading_day.0, trading_day.1, trading_day.2);
     }
     compute_diff_of_date(trading_day.0, trading_day.1, trading_day.2, year, month, day) - 1
@@ -166,9 +187,9 @@ pub fn time_info(time: &str) -> String {
     let mut date2newyear = HashMap::new();
     date2newyear.insert(2025, (1, 29));
     date2newyear.insert(2026, (2, 17));
-    let days_2 = date_to_newyear(year, month, day, date2newyear);
+    let days_2 = date_to_newyear(year, month, day, &date2newyear);
     
-    let days_3 = date_to_trading_days(year, month, day);
+    let days_3 = date_to_trading_days(year, month, day, &date2newyear);
 
     format!("{},{},{},{},{},{}", week_count, week_day, days_0, days_1, days_2, days_3)
 }
